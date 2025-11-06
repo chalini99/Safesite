@@ -1,42 +1,55 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const runBtn = document.getElementById("runAI");
-  const status = document.getElementById("aiStatus");
-  const liveData = document.getElementById("liveData");
-  const tempSpan = document.getElementById("temp");
-  const gasSpan = document.getElementById("gas");
-  const helmetSpan = document.getElementById("helmet");
+// ========== THEME TOGGLE ==========
+const themeToggle = document.getElementById("theme-toggle");
+const body = document.body;
+if (
+  localStorage.getItem("theme") === "dark" ||
+  (!localStorage.getItem("theme") && window.matchMedia("(prefers-color-scheme: dark)").matches)
+) {
+  body.classList.add("dark");
+  if (themeToggle) themeToggle.textContent = "☀️";
+}
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    body.classList.toggle("dark");
+    const dark = body.classList.contains("dark");
+    localStorage.setItem("theme", dark ? "dark" : "light");
+    themeToggle.textContent = dark ? "☀️" : "🌙";
+  });
+}
 
-  if (runBtn) {
-    runBtn.addEventListener("click", async () => {
-      status.textContent = "🚀 Running AI Detection...";
-      try {
-        const res = await fetch("http://127.0.0.1:5001/run_ai");
-        const data = await res.json();
-        if (data.status === "success") {
-          const violations = data.data.helmet_violations;
-          status.textContent = `✅ Detection Complete! Helmet Violations: ${violations}`;
-        } else {
-          status.textContent = `❌ Error: ${data.message}`;
-        }
-      } catch (err) {
-        status.textContent = "⚠️ Cannot connect to backend.";
-      }
-    });
-  }
-
-  async function refreshData() {
-    try {
-      const res = await fetch("http://127.0.0.1:5001/get_data");
-      const data = await res.json();
-      liveData.textContent = `🌡️ Temp: ${data.temperature} °C | 🧪 Gas: ${data.gas_level} ppm | ⛑️ Helmet Violations: ${data.helmet_violations}`;
-      tempSpan.textContent = `${data.temperature} °C`;
-      gasSpan.textContent = `${data.gas_level} ppm`;
-      helmetSpan.textContent = `${data.helmet_violations}`;
-    } catch (err) {
-      liveData.textContent = "No live data available.";
+// ========== BACKEND CONNECTION (fetch live data) ==========
+async function updateDashboard() {
+  try {
+    const res = await fetch("http://127.0.0.1:5001/get_data");
+    const data = await res.json();
+    if (data) {
+      document.getElementById("temp").textContent = `${data.temperature ?? "--"} °C`;
+      document.getElementById("alerts").textContent = data.helmet_violations ?? 0;
     }
+  } catch (err) {
+    console.log("Backend not responding:", err);
   }
+}
+setInterval(updateDashboard, 3000);
 
-  setInterval(refreshData, 5000);
-  refreshData();
+// ========== RUN AI DETECTION ==========
+async function runDetection() {
+  const btn = document.getElementById("run-ai");
+  if (!btn) return;
+  btn.disabled = true;
+  btn.textContent = "Processing...";
+  try {
+    const res = await fetch("http://127.0.0.1:5001/run_ai");
+    const out = await res.json();
+    alert(out.status === "success" ? "✅ Detection complete!" : "⚠️ Error running AI");
+  } catch {
+    alert("⚠️ Backend not reachable. Run: python backend.py");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Run AI Detection";
+  }
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("run-ai");
+  if (btn) btn.addEventListener("click", runDetection);
 });

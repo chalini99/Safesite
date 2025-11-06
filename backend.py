@@ -1,8 +1,6 @@
 from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
-import subprocess
-import json
-import os
+import subprocess, json, os
 
 app = Flask(__name__, static_folder='.')
 CORS(app)
@@ -20,7 +18,7 @@ def run_ai():
     try:
         subprocess.run(["python", "main.py"], check=True)
         if os.path.exists("data.json"):
-            with open("data.json", "r") as f:
+            with open("data.json") as f:
                 data = json.load(f)
             return jsonify({"status": "success", "data": data})
         else:
@@ -31,9 +29,8 @@ def run_ai():
 @app.route('/get_data', methods=['GET'])
 def get_data():
     if os.path.exists("data.json"):
-        with open("data.json", "r") as f:
-            data = json.load(f)
-        return jsonify(data)
+        with open("data.json") as f:
+            return jsonify(json.load(f))
     return jsonify({"error": "data.json not found"}), 404
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 {
-    "temperature": 35,
-    "gas_level": 427,
-    "vibration": "Normal",
+    "temperature": 42,
+    "gas_level": 355,
+    "vibration": "High",
     "helmet_violations": 1
 }
